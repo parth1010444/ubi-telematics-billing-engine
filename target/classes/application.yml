@@ -1,0 +1,15 @@
+spring:
+  data:
+    mongodb:
+      uri: ${MONGODB_URI:mongodb://localhost:27017/ubi_billing}
+      auto-index-creation: true
+
+stripe:
+  # Set STRIPE_SECRET_KEY in the runtime environment; do not commit live keys.
+  secret-key: ${STRIPE_SECRET_KEY:}
+  # Must match the event_name configured on the Stripe Billing Meter.
+  telematics-meter-event-name: ${STRIPE_TELEMATICS_METER_EVENT_NAME:ubi_telematics_usage}
+
+billing:
+  retry:
+    fixed-delay-ms: ${BILLING_RETRY_FIXED_DELAY_MS:60000}
