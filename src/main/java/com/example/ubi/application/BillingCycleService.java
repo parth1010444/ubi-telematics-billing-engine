@@ -22,7 +22,7 @@ public class BillingCycleService {
         this.stripeBillingService = stripeBillingService;
     }
 
-    public BillingCycleResponse triggerCycle(String policyId, boolean force) {
+    public BillingCycleResponse triggerCycle(String policyId, boolean force, String returnOrigin) {
         Policy policy = policyService.getPolicy(policyId);
         if (policy.getStatus() != PolicyStatus.ACTIVE) {
             throw new BillingPrerequisiteException(
@@ -71,7 +71,8 @@ public class BillingCycleService {
         BillingCycleResponse checkout = stripeBillingService.createCheckoutSession(
                 policy.getStripeCustomerId(),
                 snapshot.unpaidAmountCents(),
-                policyId
+                policyId,
+                returnOrigin
         );
 
         return new BillingCycleResponse(

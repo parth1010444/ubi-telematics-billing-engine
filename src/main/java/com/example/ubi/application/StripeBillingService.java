@@ -1,6 +1,6 @@
 package com.example.ubi.application;
 
-import com.example.ubi.config.BillingProperties;
+import com.example.ubi.config.CheckoutReturnUrlResolver;
 import com.example.ubi.config.StripeProperties;
 import com.example.ubi.dto.BillingCycleResponse;
 import com.example.ubi.exception.BillingPrerequisiteException;
@@ -22,11 +22,14 @@ public class StripeBillingService {
     private static final Logger LOGGER = LoggerFactory.getLogger(StripeBillingService.class);
 
     private final StripeProperties stripeProperties;
-    private final BillingProperties billingProperties;
+    private final CheckoutReturnUrlResolver checkoutReturnUrlResolver;
 
-    public StripeBillingService(StripeProperties stripeProperties, BillingProperties billingProperties) {
+    public StripeBillingService(
+            StripeProperties stripeProperties,
+            CheckoutReturnUrlResolver checkoutReturnUrlResolver
+    ) {
         this.stripeProperties = stripeProperties;
-        this.billingProperties = billingProperties;
+        this.checkoutReturnUrlResolver = checkoutReturnUrlResolver;
     }
 
     /**
@@ -62,21 +65,16 @@ public class StripeBillingService {
     public BillingCycleResponse createCheckoutSession(
             String stripeCustomerId,
             long amountCents,
-            String policyId
+            String policyId,
+            String returnOrigin
     ) {
         if (amountCents <= 0) {
             LOGGER.info("Skipping Stripe Checkout for policyId={} — unpaid amount is zero", policyId);
             return new BillingCycleResponse("no_charge", "zero_balance", null, null, 0L, 0L, 0L, 0L);
         }
 
-        String successUrl = withQuery(
-                billingProperties.checkoutSuccessUrl(),
-                "policyId=" + policyId + "&session_id={CHECKOUT_SESSION_ID}"
-        );
-        String cancelUrl = withQuery(
-                billingProperties.checkoutCancelUrl(),
-                "policyId=" + policyId
-        );
+        String successUrl = checkoutReturnUrlResolver.successUrl(returnOrigin, policyId);
+        String cancelUrl = checkoutReturnUrlResolver.cancelUrl(returnOrigin, policyId);
 
         SessionCreateParams params = SessionCreateParams.builder()
                 .setMode(SessionCreateParams.Mode.PAYMENT)
@@ -110,11 +108,12 @@ public class StripeBillingService {
         try {
             Session session = Session.create(params, requestOptions());
             LOGGER.info(
-                    "Created Stripe Checkout Session: policyId={} sessionId={} amountCents={} url={}",
+                    "Created Stripe Checkout Session: policyId={} sessionId={} amountCents={} url={} successUrl={}",
                     policyId,
                     session.getId(),
                     amountCents,
-                    session.getUrl()
+                    session.getUrl(),
+                    successUrl
             );
             return new BillingCycleResponse(
                     session.getId(),
@@ -175,13 +174,6 @@ public class StripeBillingService {
                     exception
             );
         }
-    }
-
-    private static String withQuery(String baseUrl, String extraQuery) {
-        if (baseUrl.contains("?")) {
-            return baseUrl + "&" + extraQuery;
-        }
-        return baseUrl + "?" + extraQuery;
     }
 
     private RequestOptions requestOptions() {

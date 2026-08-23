@@ -16,7 +16,7 @@ The service accepts simulated vehicle telemetry, stores driving events in MongoD
 8. Trigger monthly billing → create a Stripe Checkout Session for the unpaid balance.
 9. After the customer pays on Stripe-hosted Checkout, confirm the session so paid amounts are recorded on the policy.
 
-CORS is enabled for a companion dashboard at `http://localhost:5173`.
+CORS is enabled for the companion dashboard on localhost, private LAN addresses, and common HTTPS tunnels (ngrok / Cloudflare). After Checkout, Stripe returns to the dashboard origin that triggered billing — not a hardcoded localhost URL.
 
 ## Technology Stack
 
@@ -37,7 +37,8 @@ CORS is enabled for a companion dashboard at `http://localhost:5173`.
 - Billing audit/outbox records + scheduled Stripe meter retries
 - Monthly billing via Stripe Checkout (unpaid accrued premium)
 - Checkout confirmation to record successful payments
-- CORS for local Vite dashboard (`localhost:5173`)
+- Checkout return URLs follow the live dashboard origin (localhost, LAN, or HTTPS tunnel)
+- CORS for local Vite dashboard, LAN, and common tunnels
 - Local Stripe secrets via gitignored `application-local.yml`
 - Stripe bootstrap script (`scripts/setup-stripe.sh`)
 
@@ -147,6 +148,14 @@ Usage is reported with Stripe Billing Meter Events:
 3. `zero_balance` — nothing to charge.
 4. Otherwise creates a Checkout Session (`mode=payment`) and returns `checkout_pending` with the hosted Checkout URL in `hostedInvoiceUrl`.
 
+Send the dashboard origin in the JSON body so Stripe returns there after payment:
+
+```json
+{ "returnOrigin": "https://YOUR-TUNNEL.ngrok-free.app" }
+```
+
+If `returnOrigin` is omitted, the API uses the request `Origin` header, then falls back to `billing.checkout-success-url` (`http://localhost:5173`). Allowed origins: localhost, private LAN IPs, HTTPS tunnels (ngrok / Cloudflare / localtunnel), plus `billing.allowed-return-origins`.
+
 After payment, call `POST /api/v1/billing/confirm-checkout` with `{ "policyId", "sessionId" }`. The API verifies the session in Stripe and increments `paidAmountCents` (idempotent per session).
 
 ## Prerequisites
@@ -218,8 +227,8 @@ Creates a Stripe Customer and Billing Meter (`ubi_telematics_usage`), then print
 | `STRIPE_TELEMATICS_METER_EVENT_NAME` | Meter event name (default `ubi_telematics_usage`) |
 | `MONGODB_URI` | Mongo connection (default `mongodb://localhost:27017/ubi_billing`) |
 | `BILLING_RETRY_FIXED_DELAY_MS` | Outbox retry interval (default `60000`) |
-| `BILLING_CHECKOUT_SUCCESS_URL` | Checkout success redirect |
-| `BILLING_CHECKOUT_CANCEL_URL` | Checkout cancel redirect |
+| `BILLING_CHECKOUT_SUCCESS_URL` | Fallback Checkout success redirect if the dashboard does not send `returnOrigin` |
+| `BILLING_CHECKOUT_CANCEL_URL` | Fallback Checkout cancel redirect |
 
 Placeholder secret keys allow the app to start; meter reporting and Checkout will fail until a real key is set.
 
@@ -242,6 +251,7 @@ billing:
     fixed-delay-ms: ${BILLING_RETRY_FIXED_DELAY_MS:60000}
   checkout-success-url: ${BILLING_CHECKOUT_SUCCESS_URL:http://localhost:5173/?billing=success}
   checkout-cancel-url: ${BILLING_CHECKOUT_CANCEL_URL:http://localhost:5173/?billing=cancelled}
+  allowed-return-origins: []
 ```
 
 ## Run
@@ -335,7 +345,9 @@ Returns newest-first items including `surchargeAdded` and `riskLevel`.
 ### Trigger monthly billing (Checkout)
 
 ```bash
-curl -X POST "http://localhost:8080/api/v1/billing/trigger-cycle/PASTE_POLICY_ID"
+curl -X POST "http://localhost:8080/api/v1/billing/trigger-cycle/PASTE_POLICY_ID" \
+  -H "Content-Type: application/json" \
+  -d '{"returnOrigin":"http://localhost:5173"}'
 ```
 
 Optional: `?force=true` to create a new Checkout Session even when unpaid is already covered.

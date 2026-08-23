@@ -14,5 +14,9 @@ stripe:
 billing:
   retry:
     fixed-delay-ms: ${BILLING_RETRY_FIXED_DELAY_MS:60000}
+  # Fallback only when the dashboard does not send returnOrigin (e.g. curl).
   checkout-success-url: ${BILLING_CHECKOUT_SUCCESS_URL:http://localhost:5173/?billing=success}
   checkout-cancel-url: ${BILLING_CHECKOUT_CANCEL_URL:http://localhost:5173/?billing=cancelled}
+  # Extra dashboard origins for Stripe return (comma-separated). Localhost, private
+  # LAN addresses, and common HTTPS tunnels are already allowed in code.
+  allowed-return-origins: []

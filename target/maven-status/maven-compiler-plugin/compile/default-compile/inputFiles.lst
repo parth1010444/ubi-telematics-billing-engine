@@ -10,6 +10,7 @@
 /Users/tnluser/Desktop/ubi-telematics-billing-engine/src/main/java/com/example/ubi/application/StripeBillingService.java
 /Users/tnluser/Desktop/ubi-telematics-billing-engine/src/main/java/com/example/ubi/application/TelemetryIngestionService.java
 /Users/tnluser/Desktop/ubi-telematics-billing-engine/src/main/java/com/example/ubi/config/BillingProperties.java
+/Users/tnluser/Desktop/ubi-telematics-billing-engine/src/main/java/com/example/ubi/config/CheckoutReturnUrlResolver.java
 /Users/tnluser/Desktop/ubi-telematics-billing-engine/src/main/java/com/example/ubi/config/CorsConfig.java
 /Users/tnluser/Desktop/ubi-telematics-billing-engine/src/main/java/com/example/ubi/config/StripeProperties.java
 /Users/tnluser/Desktop/ubi-telematics-billing-engine/src/main/java/com/example/ubi/domain/model/BillingUsageRecord.java
@@ -27,6 +28,7 @@
 /Users/tnluser/Desktop/ubi-telematics-billing-engine/src/main/java/com/example/ubi/dto/PolicyStatusUpdateRequest.java
 /Users/tnluser/Desktop/ubi-telematics-billing-engine/src/main/java/com/example/ubi/dto/TelemetryHistoryItemResponse.java
 /Users/tnluser/Desktop/ubi-telematics-billing-engine/src/main/java/com/example/ubi/dto/TelemetryIngestRequest.java
+/Users/tnluser/Desktop/ubi-telematics-billing-engine/src/main/java/com/example/ubi/dto/TriggerBillingRequest.java
 /Users/tnluser/Desktop/ubi-telematics-billing-engine/src/main/java/com/example/ubi/exception/BillingPrerequisiteException.java
 /Users/tnluser/Desktop/ubi-telematics-billing-engine/src/main/java/com/example/ubi/exception/ErrorResponse.java
 /Users/tnluser/Desktop/ubi-telematics-billing-engine/src/main/java/com/example/ubi/exception/GlobalExceptionHandler.java

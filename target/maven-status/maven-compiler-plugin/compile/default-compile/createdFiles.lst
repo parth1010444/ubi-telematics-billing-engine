@@ -12,6 +12,7 @@ com/example/ubi/api/PolicyController.class
 com/example/ubi/application/BillingOutboxService.class
 com/example/ubi/domain/repository/TelemetryEventRepository.class
 com/example/ubi/exception/GlobalExceptionHandler.class
+com/example/ubi/dto/TriggerBillingRequest.class
 com/example/ubi/config/BillingProperties.class
 com/example/ubi/api/BillingController.class
 com/example/ubi/dto/TelemetryIngestRequest.class
@@ -20,6 +21,7 @@ com/example/ubi/dto/PolicyStatusUpdateRequest.class
 com/example/ubi/application/BillingCycleService.class
 com/example/ubi/dto/ConfirmCheckoutRequest.class
 com/example/ubi/exception/InvalidTelemetryPayloadException.class
+com/example/ubi/config/CheckoutReturnUrlResolver.class
 com/example/ubi/dto/PolicyCreateRequest.class
 com/example/ubi/domain/model/PolicyStatus.class
 com/example/ubi/domain/model/Policy.class
