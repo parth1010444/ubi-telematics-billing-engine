@@ -1,7 +1,14 @@
+server:
+  # Render (and most PaaS) inject PORT; default 8080 for local.
+  port: ${PORT:8080}
+
 spring:
   data:
     mongodb:
+      # Must include a DB name in the path, e.g. ...mongodb.net/ubi_billing?...
+      # If the URI omits it, spring.data.mongodb.database is used as fallback.
       uri: ${MONGODB_URI:mongodb://localhost:27017/ubi_billing}
+      database: ${MONGODB_DATABASE:ubi_billing}
       auto-index-creation: true
 
 stripe:
@@ -17,6 +24,6 @@ billing:
   # Fallback only when the dashboard does not send returnOrigin (e.g. curl).
   checkout-success-url: ${BILLING_CHECKOUT_SUCCESS_URL:http://localhost:5173/?billing=success}
   checkout-cancel-url: ${BILLING_CHECKOUT_CANCEL_URL:http://localhost:5173/?billing=cancelled}
-  # Extra dashboard origins for Stripe return (comma-separated). Localhost, private
-  # LAN addresses, and common HTTPS tunnels are already allowed in code.
-  allowed-return-origins: []
+  # Extra dashboard origins (comma-separated). Also auto-allows localhost, LAN,
+  # tunnels, and *.vercel.app / *.netlify.app / *.onrender.com over HTTPS.
+  allowed-return-origins: ${BILLING_ALLOWED_RETURN_ORIGINS:}

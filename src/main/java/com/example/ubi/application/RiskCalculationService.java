@@ -11,22 +11,23 @@ public class RiskCalculationService {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(RiskCalculationService.class);
 
-    private static final BigDecimal HARD_BRAKING_PENALTY_UNITS = BigDecimal.valueOf(5);
-    private static final BigDecimal DISTANCE_RATE_PER_KM = BigDecimal.valueOf(0.5);
-    private static final int HIGH_SPEED_KMH = 120;
-    private static final int ELEVATED_SPEED_KMH = 90;
+    private static final BigDecimal DISTANCE_RATE_PER_KM = new BigDecimal("0.5");
+    private static final BigDecimal HARD_BRAKING_PENALTY = new BigDecimal("5");
+    private static final int HIGH_SPEED_KMH = 100;
+    private static final int ELEVATED_SPEED_KMH = 50;
 
     public record UsageChargeBreakdown(
             BigDecimal distanceCost,
-            BigDecimal behaviorPenalty,
+            BigDecimal speedMultiplier,
+            BigDecimal hardBrakingPenalty,
             BigDecimal total
     ) {
     }
 
     /**
-     * Hard braking is treated as a near-term proxy for elevated driving risk in UBI pricing.
-     * The distance component keeps the invoice metered, while the behavioral penalty nudges
-     * the premium toward safer driving patterns without changing the base policy premium.
+     * Usage premium is {@code (D · C_base) × M_speed}, plus a flat $5 when the event
+     * includes hard braking. The speed risk multiplier applies a surcharge for highway
+     * and extreme speeding without changing the base policy premium.
      * Stripe meters accept integer values, so callers convert this decimal risk score into
      * billable units at the Stripe boundary.
      */
@@ -40,31 +41,42 @@ public class RiskCalculationService {
 
     private UsageChargeBreakdown calculateUsageChargeBreakdown(TelemetryEvent event, boolean logResult) {
         BigDecimal distanceKm = event.getDistanceTraveledKm();
-        BigDecimal distanceCost = distanceKm.multiply(DISTANCE_RATE_PER_KM);
-        BigDecimal behaviorPenalty = event.isHardBraking() ? HARD_BRAKING_PENALTY_UNITS : BigDecimal.ZERO;
-        BigDecimal total = distanceCost.add(behaviorPenalty);
+        BigDecimal speedMultiplier = determineSpeedMultiplier(event.getSpeedKmh());
+        BigDecimal distanceCost = distanceKm.multiply(DISTANCE_RATE_PER_KM).multiply(speedMultiplier);
+        BigDecimal hardBrakingPenalty = event.isHardBraking() ? HARD_BRAKING_PENALTY : BigDecimal.ZERO;
+        BigDecimal total = distanceCost.add(hardBrakingPenalty);
         String riskLevel = classifyRiskLevel(event);
 
         if (logResult) {
             LOGGER.info(
                     "UBI usage premium calculated: policyId={} eventId={} speedKmh={} distanceKm={} "
-                            + "hardBraking={} riskLevel={} distanceCost={} behaviorPenalty={} usageCharge={} "
-                            + "(formula: distanceKm * {} + hardBrakePenalty {})",
+                            + "hardBraking={} riskLevel={} speedMultiplier={} distanceCost={} "
+                            + "hardBrakingPenalty={} usageCharge={} "
+                            + "(formula: (distanceKm * {}) * speedMultiplier + hardBrakingPenalty)",
                     event.getPolicyId(),
                     event.getEventId(),
                     event.getSpeedKmh(),
                     distanceKm,
                     event.isHardBraking(),
                     riskLevel,
+                    speedMultiplier,
                     distanceCost,
-                    behaviorPenalty,
+                    hardBrakingPenalty,
                     total,
-                    DISTANCE_RATE_PER_KM,
-                    HARD_BRAKING_PENALTY_UNITS
+                    DISTANCE_RATE_PER_KM
             );
         }
 
-        return new UsageChargeBreakdown(distanceCost, behaviorPenalty, total);
+        return new UsageChargeBreakdown(distanceCost, speedMultiplier, hardBrakingPenalty, total);
+    }
+
+    private BigDecimal determineSpeedMultiplier(int speedKmh) {
+        if (speedKmh >= 100) {
+            return new BigDecimal("1.50"); // 50% premium surcharge for extreme speeding
+        } else if (speedKmh >= 50) {
+            return new BigDecimal("1.20"); // 20% surcharge for highway speeding
+        }
+        return new BigDecimal("1.00"); // Standard safe driving rate
     }
 
     public String classifyRiskLevel(TelemetryEvent event) {

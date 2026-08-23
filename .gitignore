@@ -15,3 +15,5 @@ src/main/resources/application-local.yml
 .env
 .env.*
 !.env.example
+atlas-credentials.env
+*-credentials.env

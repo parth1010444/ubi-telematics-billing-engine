@@ -120,13 +120,16 @@ Outbox / audit row created from each telemetry event:
 ## Risk Calculation
 
 ```text
-distanceCost = distanceTraveledKm * 0.5
+speedMultiplier = 1.50 if speedKmh >= 100
+                = 1.20 if speedKmh >= 50
+                = 1.00 otherwise
+distanceCost    = (distanceTraveledKm * 0.5) * speedMultiplier
 hardBrakingPenalty = 5  (if isHardBraking)
-usageCharge = distanceCost + hardBrakingPenalty
+usageCharge     = distanceCost + hardBrakingPenalty
 billableUsageUnits = ceil(usageCharge)
 ```
 
-Example: `12.4 km` + hard brake → `6.2 + 5 = 11.2` → **12** meter units.
+Example: `12.4 km` at `110 km/h` with a hard brake → `(12.4 * 0.5) * 1.20 + 5 = 12.44` → **13** meter units.
 
 ## Stripe Billing Flow
 
@@ -154,7 +157,7 @@ Send the dashboard origin in the JSON body so Stripe returns there after payment
 { "returnOrigin": "https://YOUR-TUNNEL.ngrok-free.app" }
 ```
 
-If `returnOrigin` is omitted, the API uses the request `Origin` header, then falls back to `billing.checkout-success-url` (`http://localhost:5173`). Allowed origins: localhost, private LAN IPs, HTTPS tunnels (ngrok / Cloudflare / localtunnel), plus `billing.allowed-return-origins`.
+If `returnOrigin` is omitted, the API uses the request `Origin` header, then falls back to `billing.checkout-success-url` (`http://localhost:5173`). Allowed origins: localhost, private LAN IPs, HTTPS tunnels (ngrok / Cloudflare / localtunnel), hosted frontends (`*.vercel.app` / `*.netlify.app` / `*.onrender.com`), plus any extras in `BILLING_ALLOWED_RETURN_ORIGINS`.
 
 After payment, call `POST /api/v1/billing/confirm-checkout` with `{ "policyId", "sessionId" }`. The API verifies the session in Stripe and increments `paidAmountCents` (idempotent per session).
 
@@ -229,16 +232,21 @@ Creates a Stripe Customer and Billing Meter (`ubi_telematics_usage`), then print
 | `BILLING_RETRY_FIXED_DELAY_MS` | Outbox retry interval (default `60000`) |
 | `BILLING_CHECKOUT_SUCCESS_URL` | Fallback Checkout success redirect if the dashboard does not send `returnOrigin` |
 | `BILLING_CHECKOUT_CANCEL_URL` | Fallback Checkout cancel redirect |
+| `BILLING_ALLOWED_RETURN_ORIGINS` | Extra Checkout return origins, comma-separated (e.g. `https://ubi-telematics-dashboard.vercel.app`) |
 
 Placeholder secret keys allow the app to start; meter reporting and Checkout will fail until a real key is set.
 
 ### `application.yml`
 
 ```yaml
+server:
+  port: ${PORT:8080}
+
 spring:
   data:
     mongodb:
       uri: ${MONGODB_URI:mongodb://localhost:27017/ubi_billing}
+      database: ${MONGODB_DATABASE:ubi_billing}
       auto-index-creation: true
 
 stripe:
@@ -251,9 +259,8 @@ billing:
     fixed-delay-ms: ${BILLING_RETRY_FIXED_DELAY_MS:60000}
   checkout-success-url: ${BILLING_CHECKOUT_SUCCESS_URL:http://localhost:5173/?billing=success}
   checkout-cancel-url: ${BILLING_CHECKOUT_CANCEL_URL:http://localhost:5173/?billing=cancelled}
-  allowed-return-origins: []
+  allowed-return-origins: ${BILLING_ALLOWED_RETURN_ORIGINS:}
 ```
-
 ## Run
 
 ```bash

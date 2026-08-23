@@ -1,0 +1,12 @@
+target/
+.git/
+.gitignore
+.idea/
+.vscode/
+*.iml
+.DS_Store
+src/main/resources/application-local.yml
+.env
+.env.*
+README.md
+scripts/

@@ -1,5 +1,6 @@
 package com.example.ubi.config;
 
+import java.util.Arrays;
 import java.util.List;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
@@ -7,7 +8,12 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 public record BillingProperties(
         String checkoutSuccessUrl,
         String checkoutCancelUrl,
-        List<String> allowedReturnOrigins
+        /**
+         * Comma-separated extra origins, e.g.
+         * {@code https://ubi-telematics-dashboard.vercel.app,https://my-custom-domain.com}
+         * Bound from {@code billing.allowed-return-origins} / {@code BILLING_ALLOWED_RETURN_ORIGINS}.
+         */
+        String allowedReturnOrigins
 ) {
     public BillingProperties {
         if (checkoutSuccessUrl == null || checkoutSuccessUrl.isBlank()) {
@@ -16,11 +22,18 @@ public record BillingProperties(
         if (checkoutCancelUrl == null || checkoutCancelUrl.isBlank()) {
             checkoutCancelUrl = "http://localhost:5173/?billing=cancelled";
         }
-        allowedReturnOrigins = allowedReturnOrigins == null
-                ? List.of()
-                : allowedReturnOrigins.stream()
-                        .filter(origin -> origin != null && !origin.isBlank())
-                        .map(String::trim)
-                        .toList();
+        if (allowedReturnOrigins == null) {
+            allowedReturnOrigins = "";
+        }
+    }
+
+    public List<String> allowedReturnOriginList() {
+        if (allowedReturnOrigins == null || allowedReturnOrigins.isBlank()) {
+            return List.of();
+        }
+        return Arrays.stream(allowedReturnOrigins.split(","))
+                .map(String::trim)
+                .filter(origin -> !origin.isBlank())
+                .toList();
     }
 }

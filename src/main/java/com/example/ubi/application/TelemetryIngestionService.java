@@ -78,12 +78,14 @@ public class TelemetryIngestionService {
 
         LOGGER.info(
                 "Usage-based monthly premium update: policyId={} basePremium={} eventUsageCharge={} "
-                        + "distanceCost={} hardBrakePenalty={} billableUsageUnits={} accruedMonthlyPremium≈{}",
+                        + "distanceCost={} speedMultiplier={} hardBrakingPenalty={} "
+                        + "billableUsageUnits={} accruedMonthlyPremium≈{}",
                 policy.getPolicyId(),
                 policy.getBasePremium(),
                 usageCharge,
                 breakdown.distanceCost(),
-                breakdown.behaviorPenalty(),
+                breakdown.speedMultiplier(),
+                breakdown.hardBrakingPenalty(),
                 billableUsageUnits,
                 accruedPremium
         );

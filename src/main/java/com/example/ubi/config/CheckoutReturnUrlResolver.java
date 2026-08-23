@@ -4,7 +4,6 @@ import com.example.ubi.exception.BillingPrerequisiteException;
 import java.net.InetAddress;
 import java.net.URI;
 import java.net.UnknownHostException;
-import java.util.List;
 import java.util.Locale;
 import java.util.Set;
 import org.springframework.stereotype.Component;
@@ -12,8 +11,8 @@ import org.springframework.util.StringUtils;
 
 /**
  * Builds Stripe Checkout success/cancel URLs from the live dashboard origin
- * so payment return works on localhost, LAN, and HTTPS tunnels — not only
- * the configured {@code http://localhost:5173} fallback.
+ * so payment return works on localhost, LAN, HTTPS tunnels, and known
+ * hosted-frontend domains — not only the configured localhost fallback.
  */
 @Component
 public class CheckoutReturnUrlResolver {
@@ -24,6 +23,13 @@ public class CheckoutReturnUrlResolver {
             ".ngrok.io",
             ".trycloudflare.com",
             ".loca.lt"
+    );
+
+    /** Common hosted frontend platforms (HTTPS only). */
+    private static final Set<String> HOSTED_FRONTEND_SUFFIXES = Set.of(
+            ".vercel.app",
+            ".netlify.app",
+            ".onrender.com"
     );
 
     private final BillingProperties billingProperties;
@@ -91,7 +97,8 @@ public class CheckoutReturnUrlResolver {
                     "Checkout return origin is not allowed: "
                             + origin
                             + ". Use localhost, a private LAN address, an HTTPS tunnel "
-                            + "(ngrok / Cloudflare), or add it to billing.allowed-return-origins."
+                            + "(ngrok / Cloudflare), a hosted frontend (*.vercel.app / *.netlify.app), "
+                            + "or add it to billing.allowed-return-origins / BILLING_ALLOWED_RETURN_ORIGINS."
             );
         }
         return origin;
@@ -110,14 +117,11 @@ public class CheckoutReturnUrlResolver {
         if ("https".equals(scheme) && isTunnelHost(host)) {
             return true;
         }
-
-        List<String> extras = billingProperties.allowedReturnOrigins();
-        if (extras == null) {
-            return false;
+        if ("https".equals(scheme) && isHostedFrontend(host)) {
+            return true;
         }
-        return extras.stream()
-                .filter(StringUtils::hasText)
-                .map(String::trim)
+
+        return billingProperties.allowedReturnOriginList().stream()
                 .anyMatch(allowed -> allowed.equalsIgnoreCase(origin));
     }
 
@@ -161,7 +165,15 @@ public class CheckoutReturnUrlResolver {
     }
 
     private static boolean isTunnelHost(String host) {
-        for (String suffix : TUNNEL_SUFFIXES) {
+        return endsWithAny(host, TUNNEL_SUFFIXES);
+    }
+
+    private static boolean isHostedFrontend(String host) {
+        return endsWithAny(host, HOSTED_FRONTEND_SUFFIXES);
+    }
+
+    private static boolean endsWithAny(String host, Set<String> suffixes) {
+        for (String suffix : suffixes) {
             if (host.endsWith(suffix) && host.length() > suffix.length()) {
                 return true;
             }
