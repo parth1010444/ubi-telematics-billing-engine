@@ -12,4 +12,6 @@ public interface BillingUsageRecordRepository extends MongoRepository<BillingUsa
             List<BillingUsageStatus> statuses,
             Instant nextRetryAt
     );
+
+    long deleteByPolicyId(String policyId);
 }

@@ -1,0 +1,17 @@
+# Build
+target/
+*.class
+*.jar
+*.war
+
+# IDE
+.idea/
+*.iml
+.vscode/
+.DS_Store
+
+# Local secrets — never commit
+src/main/resources/application-local.yml
+.env
+.env.*
+!.env.example

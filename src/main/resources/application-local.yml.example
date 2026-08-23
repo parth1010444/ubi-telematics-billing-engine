@@ -1,0 +1,13 @@
+# Local-only overrides. Copied from application-local.yml.example.
+# This file is gitignored — never commit real keys.
+
+stripe:
+  secret-key: sk_test_replace_me
+  telematics-meter-event-name: ubi_telematics_usage
+  publishable-key: pk_test_replace_me
+
+# Optional:
+# spring:
+#   data:
+#     mongodb:
+#       uri: mongodb://localhost:27017/ubi_billing

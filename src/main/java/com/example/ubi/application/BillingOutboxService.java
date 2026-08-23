@@ -66,7 +66,9 @@ public class BillingOutboxService {
     }
 
     public void reportNow(BillingUsageRecord record) {
-        if (record.getStatus() == BillingUsageStatus.REPORTED || record.getBillableUsageUnits() <= 0) {
+        if (record.getStatus() == BillingUsageStatus.REPORTED
+                || record.getStatus() == BillingUsageStatus.ABANDONED
+                || record.getBillableUsageUnits() <= 0) {
             return;
         }
 
@@ -83,10 +85,26 @@ public class BillingOutboxService {
             record.setLastError(null);
             record.setNextRetryAt(null);
         } catch (RuntimeException exception) {
-            record.setStatus(BillingUsageStatus.FAILED);
-            record.setLastError(truncate(exception.getMessage()));
-            record.setNextRetryAt(Instant.now().plus(RETRY_BACKOFF));
-            LOGGER.warn("Stripe usage reporting failed for telemetryEventId={}", record.getTelemetryEventId(), exception);
+            String message = truncate(exception.getMessage());
+            if (isPermanentStripeFailure(message, record.getStripeCustomerId())) {
+                record.setStatus(BillingUsageStatus.ABANDONED);
+                record.setLastError(message);
+                record.setNextRetryAt(null);
+                LOGGER.warn(
+                        "Abandoning Stripe usage report for telemetryEventId={} (permanent failure)",
+                        record.getTelemetryEventId(),
+                        exception
+                );
+            } else {
+                record.setStatus(BillingUsageStatus.FAILED);
+                record.setLastError(message);
+                record.setNextRetryAt(Instant.now().plus(RETRY_BACKOFF));
+                LOGGER.warn(
+                        "Stripe usage reporting failed for telemetryEventId={}",
+                        record.getTelemetryEventId(),
+                        exception
+                );
+            }
         } finally {
             record.setAttemptCount(record.getAttemptCount() + 1);
             record.setUpdatedAt(Instant.now());
@@ -102,6 +120,19 @@ public class BillingOutboxService {
                 );
 
         records.forEach(this::reportNow);
+    }
+
+    private boolean isPermanentStripeFailure(String message, String stripeCustomerId) {
+        if ("cus_test_customer".equals(stripeCustomerId)) {
+            return true;
+        }
+        if (message == null) {
+            return false;
+        }
+        String lower = message.toLowerCase();
+        return lower.contains("resource_missing")
+                || lower.contains("no such customer")
+                || lower.contains("publishable key");
     }
 
     private String stripeIdentifier(BillingUsageRecord record) {

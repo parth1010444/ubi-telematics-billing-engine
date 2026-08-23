@@ -1,9 +1,13 @@
 package com.example.ubi.api;
 
 import com.example.ubi.application.TelemetryIngestionService;
+import com.example.ubi.dto.TelemetryHistoryItemResponse;
 import com.example.ubi.dto.TelemetryIngestRequest;
 import jakarta.validation.Valid;
+import java.util.List;
 import org.springframework.http.HttpStatus;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -24,5 +28,10 @@ public class TelemetryController {
     @ResponseStatus(HttpStatus.ACCEPTED)
     public void ingest(@Valid @RequestBody TelemetryIngestRequest request) {
         telemetryIngestionService.ingest(request);
+    }
+
+    @GetMapping("/history/{policyId}")
+    public List<TelemetryHistoryItemResponse> history(@PathVariable String policyId) {
+        return telemetryIngestionService.history(policyId);
     }
 }

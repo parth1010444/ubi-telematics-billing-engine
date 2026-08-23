@@ -36,6 +36,11 @@ public class GlobalExceptionHandler {
         return buildResponse(HttpStatus.NOT_FOUND, exception.getMessage(), Map.of());
     }
 
+    @ExceptionHandler(BillingPrerequisiteException.class)
+    public ResponseEntity<ErrorResponse> handleBillingPrerequisite(BillingPrerequisiteException exception) {
+        return buildResponse(HttpStatus.BAD_REQUEST, exception.getMessage(), Map.of());
+    }
+
     @ExceptionHandler(StripeBillingException.class)
     public ResponseEntity<ErrorResponse> handleStripeBillingFailure(StripeBillingException exception) {
         return buildResponse(HttpStatus.BAD_GATEWAY, exception.getMessage(), Map.of());

@@ -7,13 +7,17 @@ import com.example.ubi.dto.PolicyResponse;
 import com.example.ubi.dto.PolicyStatusUpdateRequest;
 import jakarta.validation.Valid;
 import java.net.URI;
+import java.util.List;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
@@ -26,18 +30,29 @@ public class PolicyController {
         this.policyService = policyService;
     }
 
+    @GetMapping
+    public List<PolicyResponse> listPolicies() {
+        return policyService.listPolicyResponses();
+    }
+
     @PostMapping
     public ResponseEntity<PolicyResponse> createPolicy(@Valid @RequestBody PolicyCreateRequest request) {
-        Policy policy = policyService.createPolicy(request);
+        PolicyResponse policy = policyService.createPolicyResponse(request);
 
         return ResponseEntity
-                .created(URI.create("/api/v1/policies/" + policy.getPolicyId()))
-                .body(PolicyResponse.from(policy));
+                .created(URI.create("/api/v1/policies/" + policy.policyId()))
+                .body(policy);
     }
 
     @GetMapping("/{policyId}")
     public PolicyResponse getPolicy(@PathVariable String policyId) {
-        return PolicyResponse.from(policyService.getPolicy(policyId));
+        return policyService.getPolicyResponse(policyId);
+    }
+
+    @DeleteMapping("/{policyId}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void deletePolicy(@PathVariable String policyId) {
+        policyService.deletePolicy(policyId);
     }
 
     @PatchMapping("/{policyId}/status")
@@ -45,6 +60,6 @@ public class PolicyController {
             @PathVariable String policyId,
             @Valid @RequestBody PolicyStatusUpdateRequest request
     ) {
-        return PolicyResponse.from(policyService.updateStatus(policyId, request));
+        return policyService.updateStatusResponse(policyId, request);
     }
 }

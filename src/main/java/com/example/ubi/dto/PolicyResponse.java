@@ -1,24 +1,21 @@
 package com.example.ubi.dto;
 
-import com.example.ubi.domain.model.Policy;
 import com.example.ubi.domain.model.PolicyStatus;
 import java.math.BigDecimal;
+import java.time.Instant;
 
 public record PolicyResponse(
         String policyId,
+        String name,
+        Integer policyNumber,
         String userId,
         String stripeCustomerId,
         BigDecimal basePremium,
-        PolicyStatus status
+        PolicyStatus status,
+        BigDecimal accruedPremium,
+        long paidAmountCents,
+        long unpaidAmountCents,
+        String premiumPaymentStatus,
+        Instant lastPaidAt
 ) {
-
-    public static PolicyResponse from(Policy policy) {
-        return new PolicyResponse(
-                policy.getPolicyId(),
-                policy.getUserId(),
-                policy.getStripeCustomerId(),
-                policy.getBasePremium(),
-                policy.getStatus()
-        );
-    }
 }
