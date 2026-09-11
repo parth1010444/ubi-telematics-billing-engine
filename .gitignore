@@ -3,17 +3,25 @@ target/
 *.class
 *.jar
 *.war
+*.ear
 
 # IDE
 .idea/
 *.iml
 .vscode/
-.DS_Store
+*.swp
+*~
 
-# Local secrets — never commit
+# OS
+.DS_Store
+Thumbs.db
+
+# Local secrets — never commit real keys or connection strings
 src/main/resources/application-local.yml
+**/application-local.yml
 .env
 .env.*
+*.env
 !.env.example
 atlas-credentials.env
 *-credentials.env

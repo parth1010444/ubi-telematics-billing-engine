@@ -1,0 +1,42 @@
+# Local stack: MongoDB + this Spring Boot API (existing Dockerfile).
+#   docker compose up --build
+# Copy `.env.example` → `.env` to supply Stripe test keys (optional for boot).
+
+services:
+  mongo:
+    image: mongo:7
+    ports:
+      - "27017:27017"
+    volumes:
+      - ubi-mongo-data:/data/db
+    healthcheck:
+      test: ["CMD", "mongosh", "--quiet", "--eval", "db.adminCommand('ping').ok"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+      start_period: 10s
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8080:8080"
+    environment:
+      PORT: "8080"
+      MONGODB_URI: mongodb://mongo:27017/ubi_billing
+      MONGODB_DATABASE: ${MONGODB_DATABASE:-ubi_billing}
+      STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY:-sk_test_replace_me}
+      STRIPE_PUBLISHABLE_KEY: ${STRIPE_PUBLISHABLE_KEY:-pk_test_replace_me}
+      STRIPE_TELEMATICS_METER_EVENT_NAME: ${STRIPE_TELEMATICS_METER_EVENT_NAME:-ubi_telematics_usage}
+      BILLING_RETRY_FIXED_DELAY_MS: ${BILLING_RETRY_FIXED_DELAY_MS:-60000}
+      BILLING_CHECKOUT_SUCCESS_URL: ${BILLING_CHECKOUT_SUCCESS_URL:-http://localhost:5173/?billing=success}
+      BILLING_CHECKOUT_CANCEL_URL: ${BILLING_CHECKOUT_CANCEL_URL:-http://localhost:5173/?billing=cancelled}
+      BILLING_ALLOWED_RETURN_ORIGINS: ${BILLING_ALLOWED_RETURN_ORIGINS:-}
+    depends_on:
+      mongo:
+        condition: service_healthy
+    restart: on-failure
+
+volumes:
+  ubi-mongo-data:

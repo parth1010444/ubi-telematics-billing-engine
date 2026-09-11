@@ -1,5 +1,5 @@
-# Local-only overrides. Copied from application-local.yml.example.
-# This file is gitignored — never commit real keys.
+# Local-only overrides. Copy to application-local.yml (gitignored).
+# Never commit real keys. Compose users can set the same values in `.env` instead.
 
 stripe:
   secret-key: sk_test_replace_me
@@ -9,12 +9,12 @@ stripe:
 billing:
   # Comma-separated extra Checkout return origins (origin only, no path/query).
   # *.vercel.app / *.netlify.app / *.onrender.com are already allowed over HTTPS.
-  allowed-return-origins: https://ubi-telematics-dashboard.vercel.app
-  checkout-success-url: https://ubi-telematics-dashboard.vercel.app/?billing=success
-  checkout-cancel-url: https://ubi-telematics-dashboard.vercel.app/?billing=cancelled
+  allowed-return-origins:
+  checkout-success-url: http://localhost:5173/?billing=success
+  checkout-cancel-url: http://localhost:5173/?billing=cancelled
 
-# Optional:
-# spring:
-#   data:
-#     mongodb:
-#       uri: mongodb://localhost:27017/ubi_billing
+spring:
+  data:
+    mongodb:
+      uri: mongodb://localhost:27017/ubi_billing
+      database: ubi_billing
