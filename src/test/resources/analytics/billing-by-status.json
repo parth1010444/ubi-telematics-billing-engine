@@ -1,0 +1,16 @@
+{
+  "collection": "billing_usage_records",
+  "filters": [
+    { "field": "status", "op": "in", "value": ["PENDING", "FAILED"] }
+  ],
+  "groupBy": ["status"],
+  "metrics": [
+    { "alias": "rows", "fn": "count" },
+    { "alias": "totalCharge", "fn": "sum", "field": "usageCharge" }
+  ],
+  "sort": [
+    { "field": "rows", "direction": "desc" }
+  ],
+  "limit": 10,
+  "chartHint": "pie"
+}

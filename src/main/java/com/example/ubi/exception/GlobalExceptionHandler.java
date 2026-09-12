@@ -46,6 +46,21 @@ public class GlobalExceptionHandler {
         return buildResponse(HttpStatus.BAD_GATEWAY, exception.getMessage(), Map.of());
     }
 
+    @ExceptionHandler(AnalyticsValidationException.class)
+    public ResponseEntity<ErrorResponse> handleAnalyticsValidation(AnalyticsValidationException exception) {
+        return buildResponse(HttpStatus.BAD_REQUEST, exception.getMessage(), exception.fieldErrors());
+    }
+
+    @ExceptionHandler(PipelineRejectedException.class)
+    public ResponseEntity<ErrorResponse> handleRejectedPipeline(PipelineRejectedException exception) {
+        return buildResponse(HttpStatus.BAD_REQUEST, exception.getMessage(), Map.of());
+    }
+
+    @ExceptionHandler(AnalyticsExecutionException.class)
+    public ResponseEntity<ErrorResponse> handleAnalyticsExecution(AnalyticsExecutionException exception) {
+        return buildResponse(HttpStatus.INTERNAL_SERVER_ERROR, exception.getMessage(), Map.of());
+    }
+
     private ResponseEntity<ErrorResponse> buildResponse(
             HttpStatus status,
             String message,

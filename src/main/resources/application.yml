@@ -18,6 +18,14 @@ stripe:
   telematics-meter-event-name: ${STRIPE_TELEMATICS_METER_EVENT_NAME:ubi_telematics_usage}
   publishable-key: ${STRIPE_PUBLISHABLE_KEY:}
 
+analytics:
+  # Aggregation maxTimeMS. Phase A uses the primary Mongo URI unless overridden.
+  max-time-ms: ${ANALYTICS_MAX_TIME_MS:5000}
+  default-limit: ${ANALYTICS_DEFAULT_LIMIT:50}
+  mongodb:
+    # Optional read-only URI. Empty / unset falls back to spring.data.mongodb.uri.
+    uri: ${ANALYTICS_MONGODB_URI:}
+
 billing:
   retry:
     fixed-delay-ms: ${BILLING_RETRY_FIXED_DELAY_MS:60000}

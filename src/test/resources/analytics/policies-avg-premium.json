@@ -1,0 +1,14 @@
+{
+  "collection": "policies",
+  "filters": [
+    { "field": "status", "op": "eq", "value": "ACTIVE" }
+  ],
+  "groupBy": [],
+  "metrics": [
+    { "alias": "avgPremium", "fn": "avg", "field": "basePremium" },
+    { "alias": "policyCount", "fn": "count" }
+  ],
+  "sort": [],
+  "limit": 1,
+  "chartHint": "table"
+}
