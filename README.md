@@ -41,15 +41,18 @@ CORS is enabled for the companion dashboard on localhost, private LAN addresses,
 - CORS for local Vite dashboard, LAN, and common tunnels
 - Local Stripe secrets via gitignored `application-local.yml`
 - Stripe bootstrap script (`scripts/setup-stripe.sh`)
+- Phase A analytics library: catalog + AST + validator + Mongo pipeline compiler (no NL yet)
 
 ## Project Layout
 
 ```text
 com.example.ubi
+├── analytics      Schema catalog, AST, validator, compiler, allowlist, executor
 ├── api
 │   ├── PolicyController
 │   ├── TelemetryController
-│   └── BillingController
+│   ├── BillingController
+│   └── AnalyticsController
 ├── application
 │   ├── PolicyService
 │   ├── TelemetryIngestionService
@@ -70,6 +73,9 @@ com.example.ubi
 
 scripts/
 └── setup-stripe.sh
+
+docs/
+└── analytics-phase-a.md   Phase A analytics AST (no NL / Gemini yet)
 
 src/main/resources/
 ├── application.yml
@@ -233,6 +239,9 @@ Creates a Stripe Customer and Billing Meter (`ubi_telematics_usage`), then print
 | `BILLING_CHECKOUT_SUCCESS_URL` | Fallback Checkout success redirect if the dashboard does not send `returnOrigin` |
 | `BILLING_CHECKOUT_CANCEL_URL` | Fallback Checkout cancel redirect |
 | `BILLING_ALLOWED_RETURN_ORIGINS` | Extra Checkout return origins, comma-separated (e.g. `https://ubi-telematics-dashboard.vercel.app`) |
+| `ANALYTICS_MAX_TIME_MS` | Analytics aggregation `maxTimeMS` (default `5000`) |
+| `ANALYTICS_DEFAULT_LIMIT` | Default AST `limit` when omitted (default `50`, max `100`) |
+| `ANALYTICS_MONGODB_URI` | Optional analytics Mongo URI; empty falls back to `MONGODB_URI` |
 
 Placeholder secret keys allow the app to start; meter reporting and Checkout will fail until a real key is set.
 
@@ -389,10 +398,26 @@ curl -X POST http://localhost:8080/api/v1/billing/confirm-checkout \
 
 Returns the updated policy with incremented `paidAmountCents` and `premiumPaymentStatus`.
 
+### Analytics (Phase A — AST only)
+
+See [docs/analytics-phase-a.md](docs/analytics-phase-a.md). There is no natural-language `/ask` yet.
+
+```bash
+curl http://localhost:8080/api/v1/analytics/catalog
+
+curl -X POST http://localhost:8080/api/v1/analytics/execute \
+  -H "Content-Type: application/json" \
+  -d @src/test/resources/analytics/telemetry-hard-brakes.json
+```
+
+```bash
+mvn test
+```
+
 ## Current Limitations
 
 - No authentication / authorization
-- No automated tests yet
+- Analytics Phase A is AST-only (no natural-language `/ask` yet); see [docs/analytics-phase-a.md](docs/analytics-phase-a.md)
 - Risk scoring is intentionally simple
 - Stripe Customer / Meter must be bootstrapped once (`scripts/setup-stripe.sh`)
 - Monthly collection is Checkout-based (customer pays), not server-side auto-charge
