@@ -11,16 +11,16 @@ import java.io.UncheckedIOException;
 
 public final class AnalyticsTestSupport {
 
-    static final ObjectMapper MAPPER = JsonMapper.builder()
+    public static final ObjectMapper MAPPER = JsonMapper.builder()
             .addModule(new JavaTimeModule())
             .build();
 
-    static final SchemaCatalog CATALOG = SchemaCatalog.builtin();
+    public static final SchemaCatalog CATALOG = SchemaCatalog.builtin();
 
     private AnalyticsTestSupport() {
     }
 
-    static AnalyticsAst loadAst(String classpathResource) {
+    public static AnalyticsAst loadAst(String classpathResource) {
         try (InputStream input = AnalyticsTestSupport.class.getResourceAsStream(classpathResource)) {
             if (input == null) {
                 throw new IllegalArgumentException("Missing test resource: " + classpathResource);

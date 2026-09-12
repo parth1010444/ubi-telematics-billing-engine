@@ -161,11 +161,11 @@ public class MongoPipelineCompiler {
     }
 
     private Document compileSort(List<SortExpr> sortExprs) {
-        Document sort = new Document();
-        for (SortExpr sort : sortExprs) {
-            sort.put(sort.field(), sort.direction() == SortDirection.DESC ? -1 : 1);
+        Document sortDocument = new Document();
+        for (SortExpr sortExpr : sortExprs) {
+            sortDocument.put(sortExpr.field(), sortExpr.direction() == SortDirection.DESC ? -1 : 1);
         }
-        return sort;
+        return sortDocument;
     }
 
     Object convertValue(FieldSchema field, Object value) {
