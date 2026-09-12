@@ -51,6 +51,13 @@ public class StripeBillingService {
         try {
             return MeterEvent.create(params, requestOptions());
         } catch (StripeException exception) {
+            if (isDuplicateMeterEvent(exception)) {
+                LOGGER.info(
+                        "Stripe already has meter event identifier={}; treating report as successful",
+                        identifier
+                );
+                return null;
+            }
             throw new StripeBillingException(
                     "Failed to report UBI usage to Stripe: " + exception.getMessage(),
                     exception
@@ -174,6 +181,15 @@ public class StripeBillingService {
                     exception
             );
         }
+    }
+
+    private static boolean isDuplicateMeterEvent(StripeException exception) {
+        String message = exception.getMessage();
+        if (message == null) {
+            return false;
+        }
+        String lower = message.toLowerCase();
+        return lower.contains("already exists") && lower.contains("identifier");
     }
 
     private RequestOptions requestOptions() {
