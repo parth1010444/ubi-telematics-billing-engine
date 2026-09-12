@@ -1,7 +1,5 @@
 # UBI Telematics Billing Engine
 
-This is dev branch, all new phases changes will be done here
-
 A Spring Boot backend for a Usage-Based Insurance (UBI) telematics billing workflow.
 
 The service accepts simulated vehicle telemetry, stores driving events in MongoDB, calculates a usage-based risk charge, reports billable usage to Stripe Meter Events, and lets the customer pay the accrued unpaid premium through Stripe Checkout.
