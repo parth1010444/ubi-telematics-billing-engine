@@ -1,0 +1,12 @@
+spring:
+  ai:
+    model:
+      chat: none
+  autoconfigure:
+    exclude:
+      - org.springframework.boot.autoconfigure.data.redis.RedisAutoConfiguration
+      - org.springframework.boot.autoconfigure.data.redis.RedisRepositoriesAutoConfiguration
+
+analytics:
+  cache:
+    enabled: false
