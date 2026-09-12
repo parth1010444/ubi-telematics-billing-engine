@@ -18,3 +18,21 @@ billing:
 #   data:
 #     mongodb:
 #       uri: mongodb://localhost:27017/ubi_billing
+#     redis:
+#       host: localhost
+#       port: 6379
+#   ai:
+#     model:
+#       chat: google-genai
+#     google:
+#       genai:
+#         # Never commit a real key. Prefer GEMINI_API_KEY in the environment.
+#         api-key: ${GEMINI_API_KEY:}
+#         chat:
+#           model: gemini-2.5-flash
+#           temperature: 0.2
+#
+# analytics:
+#   cache:
+#     enabled: true
+#     ttl-seconds: 3600

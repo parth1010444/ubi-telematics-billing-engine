@@ -1,5 +1,6 @@
 package com.example.ubi.exception;
 
+import com.example.ubi.dto.AnalyticsClarificationResponse;
 import java.time.Instant;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -59,6 +60,19 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(AnalyticsExecutionException.class)
     public ResponseEntity<ErrorResponse> handleAnalyticsExecution(AnalyticsExecutionException exception) {
         return buildResponse(HttpStatus.INTERNAL_SERVER_ERROR, exception.getMessage(), Map.of());
+    }
+
+    @ExceptionHandler(AnalyticsClarificationException.class)
+    public ResponseEntity<AnalyticsClarificationResponse> handleAnalyticsClarification(
+            AnalyticsClarificationException exception
+    ) {
+        return ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY)
+                .body(AnalyticsClarificationResponse.of(exception.getMessage(), exception.suggestions()));
+    }
+
+    @ExceptionHandler(AnalyticsLlmUnavailableException.class)
+    public ResponseEntity<ErrorResponse> handleAnalyticsLlmUnavailable(AnalyticsLlmUnavailableException exception) {
+        return buildResponse(HttpStatus.SERVICE_UNAVAILABLE, exception.getMessage(), Map.of());
     }
 
     private ResponseEntity<ErrorResponse> buildResponse(

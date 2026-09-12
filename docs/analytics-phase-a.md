@@ -1,7 +1,7 @@
 # Analytics Phase A — schema catalog, AST, and safe Mongo execution
 
-Phase A is the **deterministic, no-LLM** foundation for the later UBI NL analytics agent.
-There is no Gemini / Spring AI planner in this phase. Natural-language `/ask` arrives in Phase B.
+Phase A is the **deterministic, no-LLM** foundation for the UBI NL analytics agent.
+Natural-language `/ask` (Gemini + Redis) is Phase B — see [analytics-phase-b.md](analytics-phase-b.md).
 
 Pipeline:
 
@@ -112,8 +112,7 @@ If `ANALYTICS_MONGODB_URI` is empty, the primary URI is used.
 
 ## Out of scope (later phases)
 
-- Phase B: Google Gemini free tier via Spring AI (planner from NL → AST)
-- Redis query-plan cache
+- Phase B (landed separately): [analytics-phase-b.md](analytics-phase-b.md) — Gemini planner, `/ask`, Redis cache
 - Eval / golden NL suite beyond the unit fixtures in `src/test/resources/analytics/`
 - Dashboard charts
 - `$lookup` / multi-collection queries

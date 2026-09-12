@@ -24,7 +24,8 @@ CORS is enabled for the companion dashboard on localhost, private LAN addresses,
 
 - Java 21
 - Spring Boot 3.x
-- Spring Web / Spring Data MongoDB / Validation
+- Spring Web / Spring Data MongoDB / Validation / optional Redis
+- Spring AI + Google Gemini (free-tier AI Studio key) for NL analytics
 - Stripe Java SDK (`stripe-java` 33.x) — Meter Events + Checkout Sessions
 - MongoDB
 
@@ -43,7 +44,8 @@ CORS is enabled for the companion dashboard on localhost, private LAN addresses,
 - CORS for local Vite dashboard, LAN, and common tunnels
 - Local Stripe secrets via gitignored `application-local.yml`
 - Stripe bootstrap script (`scripts/setup-stripe.sh`)
-- Phase A analytics library: catalog + AST + validator + Mongo pipeline compiler (no NL yet)
+- Phase A analytics library: catalog + AST + validator + Mongo pipeline compiler
+- Phase B NL `/ask`: Gemini planner, one-shot AST repair, Redis cache (optional)
 
 ## Project Layout
 
@@ -77,7 +79,8 @@ scripts/
 └── setup-stripe.sh
 
 docs/
-└── analytics-phase-a.md   Phase A analytics AST (no NL / Gemini yet)
+├── analytics-phase-a.md   Phase A analytics AST (deterministic execute)
+└── analytics-phase-b.md   Phase B Gemini planner + POST /ask + Redis cache
 
 src/main/resources/
 ├── application.yml
@@ -244,6 +247,11 @@ Creates a Stripe Customer and Billing Meter (`ubi_telematics_usage`), then print
 | `ANALYTICS_MAX_TIME_MS` | Analytics aggregation `maxTimeMS` (default `5000`) |
 | `ANALYTICS_DEFAULT_LIMIT` | Default AST `limit` when omitted (default `50`, max `100`) |
 | `ANALYTICS_MONGODB_URI` | Optional analytics Mongo URI; empty falls back to `MONGODB_URI` |
+| `GEMINI_API_KEY` | Google AI Studio key for `POST /api/v1/analytics/ask` (never commit) |
+| `SPRING_AI_GOOGLE_GENAI_API_KEY` | Spring AI standard alias for the same key |
+| `GEMINI_MODEL` | Gemini model (default `gemini-2.5-flash`) |
+| `REDIS_HOST` / `REDIS_PORT` | Optional Redis for `/ask` cache (degrades if down) |
+| `ANALYTICS_CACHE_TTL_SECONDS` | `/ask` cache TTL (default `3600`) |
 
 Placeholder secret keys allow the app to start; meter reporting and Checkout will fail until a real key is set.
 
@@ -400,9 +408,14 @@ curl -X POST http://localhost:8080/api/v1/billing/confirm-checkout \
 
 Returns the updated policy with incremented `paidAmountCents` and `premiumPaymentStatus`.
 
-### Analytics (Phase A — AST only)
+### Analytics
 
-See [docs/analytics-phase-a.md](docs/analytics-phase-a.md). There is no natural-language `/ask` yet.
+Phase A (AST execute) and Phase B (NL `/ask`) — see
+[docs/analytics-phase-a.md](docs/analytics-phase-a.md) and
+[docs/analytics-phase-b.md](docs/analytics-phase-b.md).
+
+`/ask` is unauthenticated in v1. It needs a **server-side** `GEMINI_API_KEY`
+(Google AI Studio). Redis is optional.
 
 ```bash
 curl http://localhost:8080/api/v1/analytics/catalog
@@ -410,6 +423,10 @@ curl http://localhost:8080/api/v1/analytics/catalog
 curl -X POST http://localhost:8080/api/v1/analytics/execute \
   -H "Content-Type: application/json" \
   -d @src/test/resources/analytics/telemetry-hard-brakes.json
+
+curl -X POST http://localhost:8080/api/v1/analytics/ask \
+  -H "Content-Type: application/json" \
+  -d '{"question":"hard brakes by policy this year","locale":"en"}'
 ```
 
 ```bash
@@ -419,7 +436,7 @@ mvn test
 ## Current Limitations
 
 - No authentication / authorization
-- Analytics Phase A is AST-only (no natural-language `/ask` yet); see [docs/analytics-phase-a.md](docs/analytics-phase-a.md)
+- Analytics `/ask` cannot join collections or compute full accrued/unpaid premium; see [docs/analytics-phase-b.md](docs/analytics-phase-b.md)
 - Risk scoring is intentionally simple
 - Stripe Customer / Meter must be bootstrapped once (`scripts/setup-stripe.sh`)
 - Monthly collection is Checkout-based (customer pays), not server-side auto-charge
