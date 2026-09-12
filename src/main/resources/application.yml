@@ -10,6 +10,25 @@ spring:
       uri: ${MONGODB_URI:mongodb://localhost:27017/ubi_billing}
       database: ${MONGODB_DATABASE:ubi_billing}
       auto-index-creation: true
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+      timeout: 200ms
+      connect-timeout: 200ms
+      repositories:
+        enabled: false
+  ai:
+    # none unless GEMINI_API_KEY is set (see GeminiChatEnvironmentPostProcessor)
+    # or SPRING_AI_MODEL_CHAT=google-genai is exported.
+    model:
+      chat: ${SPRING_AI_MODEL_CHAT:none}
+    google:
+      genai:
+        # Prefer GEMINI_API_KEY. Spring AI standard: SPRING_AI_GOOGLE_GENAI_API_KEY.
+        api-key: ${GEMINI_API_KEY:${SPRING_AI_GOOGLE_GENAI_API_KEY:}}
+        chat:
+          model: ${GEMINI_MODEL:gemini-2.5-flash}
+          temperature: 0.2
 
 stripe:
   # Prefer application-local.yml (gitignored) with profile `local`, or set STRIPE_SECRET_KEY.
@@ -25,6 +44,13 @@ analytics:
   mongodb:
     # Optional read-only URI. Empty / unset falls back to spring.data.mongodb.uri.
     uri: ${ANALYTICS_MONGODB_URI:}
+  cache:
+    enabled: ${ANALYTICS_CACHE_ENABLED:true}
+    ttl-seconds: ${ANALYTICS_CACHE_TTL_SECONDS:3600}
+    key-prefix: ${ANALYTICS_CACHE_KEY_PREFIX:analytics:ask:}
+  llm:
+    summary-max-rows: ${ANALYTICS_SUMMARY_MAX_ROWS:8}
+    summary-max-value-chars: ${ANALYTICS_SUMMARY_MAX_VALUE_CHARS:80}
 
 billing:
   retry:
