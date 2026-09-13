@@ -39,10 +39,11 @@ public record AnalyticsProperties(
     }
 
     /**
-     * Phase A test / call-site constructor. Cache and LLM settings take defaults.
+     * Test helper. Spring Boot constructor-binds the canonical record constructor
+     * only — do not add extra constructors or {@code @ConfigurationProperties} fails to start.
      */
-    public AnalyticsProperties(Long maxTimeMs, Integer defaultLimit, Mongodb mongodb) {
-        this(maxTimeMs, defaultLimit, mongodb, null, null);
+    public static AnalyticsProperties of(Long maxTimeMs, Integer defaultLimit, Mongodb mongodb) {
+        return new AnalyticsProperties(maxTimeMs, defaultLimit, mongodb, null, null);
     }
 
     public String mongodbUri() {

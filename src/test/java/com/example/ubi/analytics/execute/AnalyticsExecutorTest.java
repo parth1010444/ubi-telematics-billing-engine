@@ -63,7 +63,7 @@ class AnalyticsExecutorTest {
                 new MongoPipelineCompiler(),
                 new PipelineAllowlist(),
                 runner,
-                new AnalyticsProperties(5000L, 50, new AnalyticsProperties.Mongodb("")),
+                AnalyticsProperties.of(5000L, 50, new AnalyticsProperties.Mongodb("")),
                 AnalyticsTestSupport.CATALOG
         );
     }
